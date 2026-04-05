@@ -114,16 +114,10 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
             )
 
         # ========================================
-        # 標簽 2: 📰 新聞監控
+        # 標簽 2: 📰 新聞監控 (奇摩新聞自動巡邏)
         # ========================================
         with gr.Tab("📰 新聞監控"):
-            with gr.Row():
-                with gr.Column(scale=1):
-                    stock_input_news = gr.Textbox(
-                        label="輸入股票代碼",
-                        value="0050",
-                        placeholder="如: 0050, 2330, 1101",
-                    )
+            gr.Markdown("**自動巡邏奇摩新聞，定期爬取財經相關內容**")
 
             status_light = gr.HTML(STATUS_IDLE)
             timer_input = gr.Number(label="設定巡邏間隔 (分鐘)", value=10, precision=1)
