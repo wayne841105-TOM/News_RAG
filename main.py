@@ -10,7 +10,21 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 # [1. 環境初始化]
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
-model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=API_KEY)
+
+# 延遲初始化模型
+model = None
+
+
+def get_model():
+    """延遲初始化 Gemini 模型"""
+    global model
+    if model is None:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("❌ 缺少 GEMINI_API_KEY 環境變數")
+        model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=api_key)
+    return model
+
 
 SAVE_DIR = "news_archive"
 if not os.path.exists(SAVE_DIR):
@@ -74,7 +88,7 @@ def batch_filter_finance(news_list):
     for i, item in enumerate(news_list):
         prompt += f"{i}. {item['title']}\n"
     try:
-        response = model.invoke(prompt)
+        response = get_model().invoke(prompt)
         ans = response.content.strip().lower()
         if "none" in ans:
             return []
@@ -189,7 +203,7 @@ def run_finance_crawl():
                 ]
             )
             full_report = ""
-            for chunk in model.stream(
+            for chunk in get_model().stream(
                 f"你是資深財經專家，請整合分析以新聞且不要超過300字：\n{payload}"
             ):
                 full_report += chunk.content
