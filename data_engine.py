@@ -21,7 +21,7 @@ load_dotenv()
 # ==========================================
 FINMIND_API_KEY = os.getenv("FINMIND_API_KEY")
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-STOCK_ID = "0050"
+DEFAULT_STOCK_ID = "0050"  # 預設股票
 FINMIND_URL = "https://api.finmindtrade.com/api/v4/data"
 NEWS_FOLDER = "news_data"
 
@@ -46,7 +46,7 @@ def get_llm():
 # ==========================================
 # 1. FINMIND 數據抓取模塊
 # ==========================================
-def fetch_finmind_data():
+def fetch_finmind_data(stock_id=DEFAULT_STOCK_ID):
     """
     抓取 FINMIND 數據：價格、籌碼、技術指標
     返回：(df, news_data)
@@ -66,7 +66,7 @@ def fetch_finmind_data():
     # --- 1.1 抓取價格數據 ---
     price_param = {
         "dataset": "TaiwanStockPrice",
-        "data_id": STOCK_ID,
+        "data_id": stock_id,
         "start_date": start_date,
         "token": FINMIND_API_KEY,
     }
@@ -93,7 +93,7 @@ def fetch_finmind_data():
     # --- 1.2 抓取籌碼數據 ---
     chip_param = {
         "dataset": "TaiwanStockInstitutionalInvestorsBuySell",
-        "data_id": STOCK_ID,
+        "data_id": stock_id,
         "start_date": start_date,
         "token": FINMIND_API_KEY,
     }
@@ -123,7 +123,7 @@ def fetch_finmind_data():
         )
 
     # --- 1.3 抓取新聞數據 ---
-    news_raw_data = fetch_and_deduplicate_news(news_start_date, today_str)
+    news_raw_data = fetch_and_deduplicate_news(stock_id, news_start_date, today_str)
 
     # --- 1.4 計算技術指標 ---
     df = df.sort_values("date").reset_index(drop=True)
@@ -151,14 +151,15 @@ def fetch_finmind_data():
         df_output = df.tail(20).copy()
         df_output["date"] = df_output["date"].dt.strftime("%Y-%m-%d")
         df_output_rounded = df_output.round(2)
+        kline_file = f"{stock_id}_daily_kline.json"
         df_output_rounded.to_json(
-            "0050_daily_kline.json", orient="records", force_ascii=False, indent=4
+            kline_file, orient="records", force_ascii=False, indent=4
         )
 
     return df, news_raw_data
 
 
-def fetch_and_deduplicate_news(news_start_date, today_str):
+def fetch_and_deduplicate_news(stock_id, news_start_date, today_str):
     """抓取新聞並去重"""
 
     def fetch_content(url):
@@ -194,7 +195,7 @@ def fetch_and_deduplicate_news(news_start_date, today_str):
 
     news_param = {
         "dataset": "TaiwanStockNews",
-        "data_id": STOCK_ID,
+        "data_id": stock_id,
         "start_date": news_start_date,
         "token": FINMIND_API_KEY,
     }
@@ -239,7 +240,7 @@ def fetch_and_deduplicate_news(news_start_date, today_str):
             for n in unique_news
         ]
 
-        news_filename = f"{NEWS_FOLDER}/{STOCK_ID}_news_{today_str}.json"
+        news_filename = f"{NEWS_FOLDER}/{stock_id}_news_{today_str}.json"
         with open(news_filename, "w", encoding="utf-8") as f:
             json.dump(clean_news_output, f, indent=4, ensure_ascii=False)
 
@@ -251,10 +252,11 @@ def fetch_and_deduplicate_news(news_start_date, today_str):
 # ==========================================
 # 2. 深度分析模塊（基於 ANALYZE.py）
 # ==========================================
-def run_deep_analysis():
+def run_deep_analysis(stock_id=DEFAULT_STOCK_ID):
     """執行 AI 深度技術分析"""
     try:
-        with open("0050_daily_kline.json", "r", encoding="utf-8") as f:
+        kline_file = f"{stock_id}_daily_kline.json"
+        with open(kline_file, "r", encoding="utf-8") as f:
             kline_data = json.load(f)
 
         json_str = json.dumps(kline_data, indent=2, ensure_ascii=False)
@@ -263,17 +265,17 @@ def run_deep_analysis():
             [
                 (
                     "system",
-                    """你是一位精通量化與籌碼分析的首席交易員。
-                    你的任務是解析 JSON 數據，並將技術指標與籌碼動向結合，產出具備實戰價值的 0050 分析報告。
+                    f"""你是一位精通量化與籌碼分析的首席交易員。
+                    你的任務是解析 JSON 數據，並將技術指標與籌碼動向結合，產出具備實戰價值的 {stock_id} 分析報告。
                     請保持語氣專業、嚴謹，直接點出關鍵位與警訊，避免冗贅言論。""",
                 ),
                 (
                     "user",
-                    """以下是 0050 最新 20 筆技術指標與籌碼 JSON 數據：
+                    f"""以下是 {stock_id} 最新 20 筆技術指標與籌碼 JSON 數據：
                     
-{kline_json}
+{{kline_json}}
 
-請根據數據完成一份【0050 綜合診斷報告】：
+請根據數據完成一份【{stock_id} 綜合診斷報告】：
 
 1. **趨勢與動量**：結合 MA5/MA20 判定多空，並利用 RSI、KD 判斷目前動能是否過熱或具備反彈契機。
 2. **籌碼面追蹤**：分析三大法人（外資/投信/自營商）近期買賣慣性。是否有「法人轉買、股價止跌」的底背離訊號？
@@ -304,10 +306,11 @@ def run_deep_analysis():
 # ==========================================
 # 3. 籌碼追蹤模塊
 # ==========================================
-def get_chip_analysis():
+def get_chip_analysis(stock_id=DEFAULT_STOCK_ID):
     """獲取籌碼面分析"""
     try:
-        with open("0050_daily_kline.json", "r", encoding="utf-8") as f:
+        kline_file = f"{stock_id}_daily_kline.json"
+        with open(kline_file, "r", encoding="utf-8") as f:
             kline_data = json.load(f)
 
         if not kline_data:
@@ -359,10 +362,11 @@ def get_chip_analysis():
 # ==========================================
 # 4. 股價走勢摘要
 # ==========================================
-def get_price_summary():
+def get_price_summary(stock_id=DEFAULT_STOCK_ID):
     """獲取股價走勢摘要"""
     try:
-        with open("0050_daily_kline.json", "r", encoding="utf-8") as f:
+        kline_file = f"{stock_id}_daily_kline.json"
+        with open(kline_file, "r", encoding="utf-8") as f:
             kline_data = json.load(f)
 
         if not kline_data:
@@ -409,11 +413,11 @@ def get_price_summary():
 # ==========================================
 # 5. 新聞數據模塊
 # ==========================================
-def get_latest_news(count=5):
+def get_latest_news(stock_id=DEFAULT_STOCK_ID, count=5):
     """獲取最新新聞"""
     try:
         today_str = datetime.date.today().strftime("%Y-%m-%d")
-        news_file = f"{NEWS_FOLDER}/{STOCK_ID}_news_{today_str}.json"
+        news_file = f"{NEWS_FOLDER}/{stock_id}_news_{today_str}.json"
 
         if not os.path.exists(news_file):
             return "📰 暫無今日新聞"
@@ -445,11 +449,11 @@ def get_latest_news(count=5):
 # ==========================================
 # 6. 整體更新函數
 # ==========================================
-def refresh_all_data():
+def refresh_all_data(stock_id=DEFAULT_STOCK_ID):
     """一次更新所有數據"""
     try:
-        print("🔄 正在更新所有數據...")
-        fetch_finmind_data()
+        print(f"🔄 正在更新 {stock_id} 的所有數據...")
+        fetch_finmind_data(stock_id)
         print("✅ 數據更新完成")
         return True
     except Exception as e:

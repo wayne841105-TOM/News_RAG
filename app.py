@@ -52,38 +52,51 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
         with gr.Tab("🏠 儀表板"):
             with gr.Row():
                 with gr.Column(scale=1):
-                    refresh_btn = gr.Button("🔄 立即更新所有數據", variant="primary")
+                    stock_input = gr.Textbox(
+                        label="輸入股票代碼",
+                        value="0050",
+                        placeholder="如: 0050, 2330, 1101",
+                    )
+                    load_stock_btn = gr.Button("📊 加載股票", variant="primary")
+                    refresh_btn = gr.Button("🔄 立即更新數據", variant="primary")
                     refresh_status = gr.Textbox(
                         label="更新狀態", value="✅ 就緒", interactive=False
                     )
 
             with gr.Row():
-                price_display = gr.Markdown("### 📈 股價走勢\n載入中...")
+                price_display = gr.Markdown("### 📈 股價走勢\n選擇股票後點擊【加載】")
 
             with gr.Row():
-                chip_display = gr.Markdown("### 📊 籌碼追蹤\n載入中...")
+                chip_display = gr.Markdown("### 📊 籌碼追蹤\n選擇股票後點擊【加載】")
 
             # 刷新邏輯
-            def refresh_dashboard():
+            def refresh_dashboard(stock_code):
                 refresh_status_text = "🔄 正在更新數據..."
-                if refresh_all_data():
+                if refresh_all_data(stock_code):
                     refresh_status_text = "✅ 更新完成 @ " + datetime.now().strftime(
                         "%H:%M:%S"
                     )
                 else:
                     refresh_status_text = "❌ 更新失敗"
 
-                return refresh_status_text, get_price_summary(), get_chip_analysis()
+                return (
+                    refresh_status_text,
+                    get_price_summary(stock_code),
+                    get_chip_analysis(stock_code),
+                )
+
+            def init_dashboard(stock_code):
+                return get_price_summary(stock_code), get_chip_analysis(stock_code)
+
+            load_stock_btn.click(
+                fn=init_dashboard,
+                inputs=[stock_input],
+                outputs=[price_display, chip_display],
+            )
 
             refresh_btn.click(
                 fn=refresh_dashboard,
-                outputs=[refresh_status, price_display, chip_display],
-            )
-
-            # 初始化顯示
-            gr.on(
-                triggers=[refresh_btn.click],
-                fn=refresh_dashboard,
+                inputs=[stock_input],
                 outputs=[refresh_status, price_display, chip_display],
             )
 
@@ -91,18 +104,36 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
         # 標簽 2: 📊 技術分析
         # ========================================
         with gr.Tab("📊 技術分析"):
+            with gr.Row():
+                with gr.Column(scale=1):
+                    stock_input_analyze = gr.Textbox(
+                        label="輸入股票代碼",
+                        value="0050",
+                        placeholder="如: 0050, 2330, 1101",
+                    )
+                    analyze_btn = gr.Button("🚀 執行 AI 技術分析", variant="primary")
+
             analysis_output = gr.Markdown("### 🤖 AI 深度分析\n按下按鈕開始分析...")
-            analyze_btn = gr.Button("🚀 執行 AI 技術分析", variant="primary")
 
-            def run_analysis():
-                return run_deep_analysis()
+            def run_analysis(stock_code):
+                return run_deep_analysis(stock_code)
 
-            analyze_btn.click(fn=run_analysis, outputs=analysis_output)
+            analyze_btn.click(
+                fn=run_analysis, inputs=[stock_input_analyze], outputs=analysis_output
+            )
 
         # ========================================
         # 標簽 3: 📰 新聞監控
         # ========================================
         with gr.Tab("📰 新聞監控"):
+            with gr.Row():
+                with gr.Column(scale=1):
+                    stock_input_news = gr.Textbox(
+                        label="輸入股票代碼",
+                        value="0050",
+                        placeholder="如: 0050, 2330, 1101",
+                    )
+
             status_light = gr.HTML(STATUS_IDLE)
             timer_input = gr.Number(label="設定巡邏間隔 (分鐘)", value=10, precision=1)
 
@@ -218,19 +249,42 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
         # 標簽 4: 📑 最新新聞
         # ========================================
         with gr.Tab("📑 最新新聞"):
-            news_count = gr.Slider(
-                minimum=1, maximum=20, value=5, step=1, label="顯示新聞數量"
-            )
+            with gr.Row():
+                with gr.Column(scale=2):
+                    stock_input_news_list = gr.Textbox(
+                        label="輸入股票代碼",
+                        value="0050",
+                        placeholder="如: 0050, 2330, 1101",
+                    )
+                with gr.Column(scale=1):
+                    news_count = gr.Slider(
+                        minimum=1, maximum=20, value=5, step=1, label="顯示新聞數量"
+                    )
+
             news_output = gr.Markdown("### 📰 最新新聞\n載入中...")
             news_refresh_btn = gr.Button("🔄 重新載入新聞", variant="primary")
 
-            def load_news(count):
-                return get_latest_news(int(count))
+            def load_news(stock_code, count):
+                return get_latest_news(stock_code, int(count))
+
+            def on_news_change(stock_code, count):
+                return load_news(stock_code, count)
 
             news_refresh_btn.click(
-                fn=load_news, inputs=[news_count], outputs=news_output
+                fn=load_news,
+                inputs=[stock_input_news_list, news_count],
+                outputs=news_output,
             )
-            news_count.change(fn=load_news, inputs=[news_count], outputs=news_output)
+            stock_input_news_list.change(
+                fn=on_news_change,
+                inputs=[stock_input_news_list, news_count],
+                outputs=news_output,
+            )
+            news_count.change(
+                fn=on_news_change,
+                inputs=[stock_input_news_list, news_count],
+                outputs=news_output,
+            )
 
 if __name__ == "__main__":
     demo.launch(share=True)
