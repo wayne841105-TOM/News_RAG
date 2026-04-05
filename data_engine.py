@@ -252,8 +252,13 @@ def fetch_and_deduplicate_news(stock_id, news_start_date, today_str):
 # ==========================================
 # 2. 深度分析模塊（基於 ANALYZE.py）
 # ==========================================
-def run_deep_analysis(stock_id=DEFAULT_STOCK_ID):
-    """執行 AI 深度技術分析"""
+def run_deep_analysis(stock_id=DEFAULT_STOCK_ID, news_data=None):
+    """執行 AI 深度技術分析
+
+    Args:
+        stock_id: 股票代碼
+        news_data: 最新新聞列表，格式為 [{"title": "...", "content": "..."}, ...]
+    """
     try:
         kline_file = f"{stock_id}_daily_kline.json"
         with open(kline_file, "r", encoding="utf-8") as f:
@@ -261,21 +266,30 @@ def run_deep_analysis(stock_id=DEFAULT_STOCK_ID):
 
         json_str = json.dumps(kline_data, indent=2, ensure_ascii=False)
 
+        # 構建新聞內容
+        news_section = ""
+        if news_data and len(news_data) > 0:
+            news_section = "\n\n### 📰 參考新聞事件（最新 3 則）：\n"
+            for idx, news in enumerate(news_data[:3], 1):
+                news_section += f"{idx}. **{news.get('title', 'N/A')}**\n"
+                if news.get("content"):
+                    news_section += f"   {news.get('content', '')[:200]}...\n"
+
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
                     "system",
                     f"""你是一位精通量化與籌碼分析的首席交易員。
-                    你的任務是解析 JSON 數據，並將技術指標與籌碼動向結合，產出具備實戰價值的 {stock_id} 分析報告。
+                    你的任務是解析 JSON 數據，並將技術指標與籌碼動向，以及最新新聞事件結合，產出具備實戰價值的 {stock_id} 分析報告。
                     請保持語氣專業、嚴謹，直接點出關鍵位與警訊，避免冗贅言論。""",
                 ),
                 (
                     "user",
                     f"""以下是 {stock_id} 最新 20 筆技術指標與籌碼 JSON 數據：
                     
-{{kline_json}}
+{{kline_json}}{news_section}
 
-請根據數據完成一份【{stock_id} 綜合診斷報告】：
+請根據數據與新聞事件完成一份【{stock_id} 綜合診斷報告】：
 
 1. **趨勢與動量**：結合 MA5/MA20 判定多空，並利用 RSI、KD 判斷目前動能是否過熱或具備反彈契機。
 2. **籌碼面追蹤**：分析三大法人（外資/投信/自營商）近期買賣慣性。是否有「法人轉買、股價止跌」的底背離訊號？
@@ -283,11 +297,12 @@ def run_deep_analysis(stock_id=DEFAULT_STOCK_ID):
     - **止跌區**：觀察收盤價與 fib_0.618、fib_0.500 的距離，評估支撐強度。
     - **止盈點**：計算目前股價與 fib_1.618 (延伸位) 的空間。
 4. **布林軌道定位**：判斷價格位處通道何處（上軌、中軌、下軌），通道目前是擴張（噴發預兆）還是擠壓（盤整準備）。
-5. **實戰結論**：
+5. **新聞面影響分析**：根據最新新聞事件，評估對股價的潛在影響。是否有利多、利空訊號？
+6. **實戰結論**：
     - **短線預測**：看漲/看跌/盤整。
     - **關鍵位**：支撐位（下方的 fib 位）與壓力位（上軌或 fib 延伸位）。
     - **操作建議**：給出具體的「進場、觀望、或減碼」策略。
-6. **預測**:給出下個交易日的價格走勢預測，並說明理由。
+7. **預測**:給出下個交易日的價格走勢預測，並說明理由。
 請使用繁體中文回覆，重點數值請加粗顯示。""",
                 ),
             ]

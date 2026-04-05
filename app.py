@@ -1,5 +1,7 @@
 import gradio as gr
 import logging
+import os
+import json
 from main import run_finance_crawl
 from data_engine import (
     refresh_all_data,
@@ -79,7 +81,7 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
             with gr.Row():
                 analysis_output = gr.Markdown("### 🤖 AI 深度分析\n等待分析...")
 
-            # 整合分析邏輯：抓取數據 + 顯示結果 + AI 分析
+            # 整合分析邏輯：抓取數據 + 顯示結果 + AI 分析（含新聞）
             def full_analysis(stock_code):
                 status = "🔄 正在抓取數據..."
 
@@ -98,9 +100,26 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
                 # 第三步：獲取籌碼追蹤
                 chip_summary = get_chip_analysis(stock_code)
 
-                # 第四步：執行 AI 深度分析
+                # 第四步：抓取最新新聞（用於 AI 分析參考）
+                status = "🔄 正在抓取最新新聞..."
+                latest_news = get_latest_news(stock_code, count=10)
+
+                # 從 Markdown 格式的新聞中提取結構化資訊供 AI 使用
+                news_data = []
+                try:
+                    import json as json_lib
+
+                    today_str = datetime.now().strftime("%Y-%m-%d")
+                    news_file = f"news_data/{stock_code}_news_{today_str}.json"
+                    if os.path.exists(news_file):
+                        with open(news_file, "r", encoding="utf-8") as f:
+                            news_data = json_lib.load(f)[:10]  # 取前 10 則
+                except:
+                    news_data = []
+
+                # 第五步：執行 AI 深度分析（帶上新聞資訊）
                 status = "🔄 正在執行 AI 分析..."
-                ai_analysis = run_deep_analysis(stock_code)
+                ai_analysis = run_deep_analysis(stock_code, news_data=news_data)
 
                 status = "✅ 分析完成 @ " + datetime.now().strftime("%H:%M:%S")
 
@@ -272,4 +291,4 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
             )
 
 if __name__ == "__main__":
-    demo.launch(share=True)
+    demo.launch()
