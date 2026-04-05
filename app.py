@@ -47,9 +47,10 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
 
     with gr.Tabs():
         # ========================================
-        # 標簽 1: 🏠 儀表板 (Dashboard)
+        # 標簽 1: 📈 股票分析 (整合儀表板 + 技術分析)
         # ========================================
-        with gr.Tab("🏠 儀表板"):
+        with gr.Tab("📈 股票分析"):
+            # 控制面板：股票輸入 + 分析按鈕
             with gr.Row():
                 with gr.Column(scale=1):
                     stock_input = gr.Textbox(
@@ -57,73 +58,63 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
                         value="0050",
                         placeholder="如: 0050, 2330, 1101",
                     )
-                    load_stock_btn = gr.Button("📊 加載股票", variant="primary")
-                    refresh_btn = gr.Button("🔄 立即更新數據", variant="primary")
-                    refresh_status = gr.Textbox(
-                        label="更新狀態", value="✅ 就緒", interactive=False
-                    )
 
-            with gr.Row():
-                price_display = gr.Markdown("### 📈 股價走勢\n選擇股票後點擊【加載】")
-
-            with gr.Row():
-                chip_display = gr.Markdown("### 📊 籌碼追蹤\n選擇股票後點擊【加載】")
-
-            # 刷新邏輯
-            def refresh_dashboard(stock_code):
-                refresh_status_text = "🔄 正在更新數據..."
-                if refresh_all_data(stock_code):
-                    refresh_status_text = "✅ 更新完成 @ " + datetime.now().strftime(
-                        "%H:%M:%S"
-                    )
-                else:
-                    refresh_status_text = "❌ 更新失敗"
-
-                return (
-                    refresh_status_text,
-                    get_price_summary(stock_code),
-                    get_chip_analysis(stock_code),
-                )
-
-            def init_dashboard(stock_code):
-                return get_price_summary(stock_code), get_chip_analysis(stock_code)
-
-            load_stock_btn.click(
-                fn=init_dashboard,
-                inputs=[stock_input],
-                outputs=[price_display, chip_display],
-            )
-
-            refresh_btn.click(
-                fn=refresh_dashboard,
-                inputs=[stock_input],
-                outputs=[refresh_status, price_display, chip_display],
-            )
-
-        # ========================================
-        # 標簽 2: 📊 技術分析
-        # ========================================
-        with gr.Tab("📊 技術分析"):
-            with gr.Row():
                 with gr.Column(scale=1):
-                    stock_input_analyze = gr.Textbox(
-                        label="輸入股票代碼",
-                        value="0050",
-                        placeholder="如: 0050, 2330, 1101",
+                    gr.Markdown("### ")  # 空間
+                    analyze_btn = gr.Button(
+                        "🚀 完整分析 (數據+AI)", variant="primary", size="lg"
                     )
-                    analyze_btn = gr.Button("🚀 執行 AI 技術分析", variant="primary")
 
-            analysis_output = gr.Markdown("### 🤖 AI 深度分析\n按下按鈕開始分析...")
+            status_text = gr.Textbox(
+                label="分析狀態", value="✅ 就緒", interactive=False
+            )
 
-            def run_analysis(stock_code):
-                return run_deep_analysis(stock_code)
+            # 分析結果展示區
+            with gr.Row():
+                price_display = gr.Markdown("### 📈 股價走勢\n等待分析...")
 
+            with gr.Row():
+                chip_display = gr.Markdown("### 📊 籌碼追蹤\n等待分析...")
+
+            with gr.Row():
+                analysis_output = gr.Markdown("### 🤖 AI 深度分析\n等待分析...")
+
+            # 整合分析邏輯：抓取數據 + 顯示結果 + AI 分析
+            def full_analysis(stock_code):
+                status = "🔄 正在抓取數據..."
+
+                # 第一步：抓取數據
+                if not refresh_all_data(stock_code):
+                    return (
+                        "❌ 數據抓取失敗",
+                        "❌ 無法載入數據",
+                        "❌ 無法載入數據",
+                        "❌ 無法載入數據",
+                    )
+
+                # 第二步：獲取股價摘要
+                price_summary = get_price_summary(stock_code)
+
+                # 第三步：獲取籌碼追蹤
+                chip_summary = get_chip_analysis(stock_code)
+
+                # 第四步：執行 AI 深度分析
+                status = "🔄 正在執行 AI 分析..."
+                ai_analysis = run_deep_analysis(stock_code)
+
+                status = "✅ 分析完成 @ " + datetime.now().strftime("%H:%M:%S")
+
+                return status, price_summary, chip_summary, ai_analysis
+
+            # 點擊【完整分析】按鈕 → 執行完整流程
             analyze_btn.click(
-                fn=run_analysis, inputs=[stock_input_analyze], outputs=analysis_output
+                fn=full_analysis,
+                inputs=[stock_input],
+                outputs=[status_text, price_display, chip_display, analysis_output],
             )
 
         # ========================================
-        # 標簽 3: 📰 新聞監控
+        # 標簽 2: 📰 新聞監控
         # ========================================
         with gr.Tab("📰 新聞監控"):
             with gr.Row():
@@ -246,7 +237,7 @@ with gr.Blocks(theme=gr.themes.Soft(), title="AI 財經監控") as demo:
             )
 
         # ========================================
-        # 標簽 4: 📑 最新新聞
+        # 標簽 3: 📑 最新新聞
         # ========================================
         with gr.Tab("📑 最新新聞"):
             with gr.Row():
