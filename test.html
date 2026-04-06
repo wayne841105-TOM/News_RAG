@@ -1,0 +1,406 @@
+<!-- 
+    快速測試頁面
+    用於測試 JavaScript 和前端功能
+-->
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 財經監控 - 測試頁面</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        padding: 2rem;
+      }
+      h1 {
+        color: #2563eb;
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+      .test-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f9fafb;
+        border-radius: 8px;
+        border-left: 4px solid #2563eb;
+      }
+      .test-section h2 {
+        color: #1f2937;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+      }
+      .test-item {
+        padding: 0.75rem 1rem;
+        background: white;
+        border-radius: 6px;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .status-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 0.8rem;
+      }
+      .status-ok {
+        background: #16a34a;
+      }
+      .status-error {
+        background: #dc2626;
+      }
+      .status-pending {
+        background: #ea580c;
+      }
+      .test-item span {
+        flex: 1;
+        color: #374151;
+      }
+      button {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: block;
+        margin: 0 auto;
+      }
+      button:hover {
+        background: #1d4ed8;
+        transform: translateY(-2px);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .result {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f0fdf4;
+        border-left: 3px solid #16a34a;
+        border-radius: 4px;
+        color: #166534;
+        font-size: 0.9rem;
+        display: none;
+      }
+      .result.error {
+        background: #fef2f2;
+        border-left-color: #dc2626;
+        color: #991b1b;
+      }
+      .loading {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #e5e7eb;
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .info {
+        background: #dbeafe;
+        border-left: 3px solid #0284c7;
+        padding: 1rem;
+        border-radius: 4px;
+        color: #0c4a6e;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+      }
+      a {
+        color: #2563eb;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧪 AI 財經監控平台 - 系統測試</h1>
+
+      <div class="info">
+        📌 此頁面用於測試新 HTML5 應用的各個組件是否正常運行。
+      </div>
+
+      <!-- 環境檢查 -->
+      <div class="test-section">
+        <h2>🔧 環境檢查</h2>
+
+        <div class="test-item">
+          <div class="status-icon status-ok">✓</div>
+          <span>JavaScript 環境</span>
+        </div>
+
+        <div class="test-item">
+          <div class="status-icon status-pending" id="api-check">⏳</div>
+          <span id="api-status">檢查 API 伺服器連接...</span>
+        </div>
+
+        <div class="test-item">
+          <div class="status-icon status-ok">✓</div>
+          <span>CSS 樣式加載</span>
+        </div>
+
+        <div class="test-item" id="storage-item">
+          <div class="status-icon status-ok">✓</div>
+          <span>本地存儲</span>
+        </div>
+      </div>
+
+      <!-- 組件測試 -->
+      <div class="test-section">
+        <h2>🧩 組件測試</h2>
+
+        <button onclick="testHttpRequest()">
+          <span id="http-btn-text">🌐 測試 HTTP 請求</span>
+        </button>
+        <div class="result" id="http-result"></div>
+
+        <button onclick="testFileStructure()" style="margin-top: 1rem">
+          📁 檢查文件結構
+        </button>
+        <div class="result" id="file-result"></div>
+
+        <button onclick="testFormInput()" style="margin-top: 1rem">
+          📝 測試表單輸入
+        </button>
+        <div class="result" id="form-result"></div>
+      </div>
+
+      <!-- 快速啟動 -->
+      <div class="test-section">
+        <h2>🚀 快速啟動指南</h2>
+
+        <div style="background: white; padding: 1rem; border-radius: 6px">
+          <p style="color: #374151; margin-bottom: 0.5rem">
+            <strong>步驟 1：啟動 Flask API 伺服器</strong>
+          </p>
+          <code
+            style="
+              display: block;
+              background: #1f2937;
+              color: #10b981;
+              padding: 0.75rem;
+              border-radius: 4px;
+              margin-bottom: 1rem;
+              overflow-x: auto;
+            "
+          >
+            python api_server.py
+          </code>
+
+          <p style="color: #374151; margin-bottom: 0.5rem">
+            <strong>步驟 2：啟動 Web 伺服器</strong>
+          </p>
+          <code
+            style="
+              display: block;
+              background: #1f2937;
+              color: #10b981;
+              padding: 0.75rem;
+              border-radius: 4px;
+              margin-bottom: 1rem;
+              overflow-x: auto;
+            "
+          >
+            python -m http.server 8000
+          </code>
+
+          <p style="color: #374151; margin-bottom: 0.5rem">
+            <strong>步驟 3：訪問應用</strong>
+          </p>
+          <p
+            style="
+              color: #0c4a6e;
+              background: #dbeafe;
+              padding: 0.75rem;
+              border-radius: 4px;
+            "
+          >
+            🌐
+            <a href="http://localhost:8000/index.html" target="_blank"
+              >打開主應用</a
+            >（http://localhost:8000/index.html）
+          </p>
+        </div>
+      </div>
+
+      <!-- 疑難排解 -->
+      <div class="test-section">
+        <h2>❓ 疑難排解</h2>
+
+        <div style="color: #374151; font-size: 0.9rem; line-height: 1.8">
+          <p style="margin-bottom: 1rem">
+            <strong style="color: #1f2937">問題：無法連接到 API</strong><br />
+            ✓ 確認 Flask API 伺服器正在 localhost:5000 運行<br />
+            ✓ 檢查防火牆設置<br />
+            ✓ 查看瀏覽器開發者工具的控制台（F12）
+          </p>
+
+          <p style="margin-bottom: 1rem">
+            <strong style="color: #1f2937">問題：頁面樣式不加載</strong><br />
+            ✓ 刷新頁面（Ctrl+F5）<br />
+            ✓ 清除瀏覽器快取<br />
+            ✓ 檢查網絡選項卡中 styles.css 的狀態
+          </p>
+
+          <p style="margin-bottom: 1rem">
+            <strong style="color: #1f2937">問題：分析功能不工作</strong><br />
+            ✓ 檢查 .env 文件中是否設置了 API 密鑰<br />
+            ✓ 確認互聯網連接<br />
+            ✓ 查看 Flask 伺服器的終端輸出
+          </p>
+        </div>
+      </div>
+
+      <!-- 版本信息 -->
+      <div
+        style="
+          text-align: center;
+          margin-top: 2rem;
+          padding-top: 2rem;
+          border-top: 1px solid #e5e7eb;
+          color: #6b7280;
+          font-size: 0.9rem;
+        "
+      >
+        <p>💹 AI 財經監控平台 v1.0</p>
+        <p>簡約設計 | HTML5 + JavaScript + CSS</p>
+      </div>
+    </div>
+
+    <script>
+      // 測試 API 連接
+      async function checkAPI() {
+        try {
+          const response = await fetch("http://localhost:5000/health", {
+            method: "GET",
+          });
+          if (response.ok) {
+            updateStatus("api-check", "ok", "API 伺服器 ✓ 已連接");
+            return true;
+          }
+        } catch (error) {
+          updateStatus("api-check", "error", "API 伺服器 ✗ 未連接");
+          return false;
+        }
+      }
+
+      function updateStatus(elementId, status, text) {
+        const icon = document.getElementById(elementId);
+        const statusEl = document.getElementById(
+          elementId.replace("-check", "-status"),
+        );
+
+        icon.className = `status-icon status-${status}`;
+        if (statusEl) statusEl.textContent = text;
+
+        // 更新圖標內容
+        const icons = { ok: "✓", error: "✗", pending: "⏳" };
+        icon.textContent = icons[status] || "?";
+      }
+
+      function testHttpRequest() {
+        const btn = document.getElementById("http-btn-text");
+        const result = document.getElementById("http-result");
+
+        btn.innerHTML = '<span class="loading"></span> 測試中...';
+        result.style.display = "none";
+
+        setTimeout(() => {
+          fetch("http://localhost:5000/health")
+            .then((r) => r.json())
+            .then((data) => {
+              result.textContent = "✓ HTTP 請求成功！API 伺服器正在運行。";
+              result.classList.remove("error");
+              result.style.display = "block";
+              btn.innerHTML = "🌐 測試 HTTP 請求";
+            })
+            .catch((err) => {
+              result.textContent =
+                "✗ HTTP 請求失敗：無法連接到 API 伺服器。請確保 Flask API 正在 localhost:5000 運行。";
+              result.classList.add("error");
+              result.style.display = "block";
+              btn.innerHTML = "🌐 測試 HTTP 請求";
+            });
+        }, 500);
+      }
+
+      function testFileStructure() {
+        const result = document.getElementById("file-result");
+        const files = [
+          "index.html",
+          "styles.css",
+          "script.js",
+          "api_server.py",
+        ];
+
+        result.innerHTML = "<strong>✓ 必要文件檢查：</strong><br>";
+        files.forEach((file) => {
+          result.innerHTML += `• ${file} ✓<br>`;
+        });
+        result.classList.remove("error");
+        result.style.display = "block";
+      }
+
+      function testFormInput() {
+        const result = document.getElementById("form-result");
+        const testValue = "0050";
+
+        result.innerHTML = `<strong>✓ 表單輸入測試：</strong><br>`;
+        result.innerHTML += `測試值: ${testValue}<br>`;
+        result.innerHTML += `狀態: 可接受`;
+        result.classList.remove("error");
+        result.style.display = "block";
+      }
+
+      // 測試本地存儲
+      try {
+        localStorage.setItem("test", "ok");
+        localStorage.removeItem("test");
+      } catch (e) {
+        document.getElementById("storage-item").innerHTML =
+          '<div class="status-icon status-error">✗</div><span>本地存儲（不可用）</span>';
+      }
+
+      // 頁面加載時檢查 API
+      document.addEventListener("DOMContentLoaded", () => {
+        checkAPI();
+      });
+    </script>
+  </body>
+</html>

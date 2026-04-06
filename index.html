@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 財經監控平台</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- 頂部導航 -->
+      <header class="navbar">
+        <div class="navbar-content">
+          <h1 class="logo">💹 財經監控</h1>
+          <p class="tagline">簡潔高效的股票分析工具</p>
+        </div>
+      </header>
+
+      <!-- 主要內容 -->
+      <main class="main-content">
+        <!-- 標簽導航 -->
+        <div class="tabs-container">
+          <button class="tab-btn active" data-tab="analysis">
+            📈 股票分析
+          </button>
+          <button class="tab-btn" data-tab="monitor">📰 新聞監控</button>
+        </div>
+
+        <!-- Tab 1: 股票分析 -->
+        <div id="analysis" class="tab-content active">
+          <!-- 控制面板 -->
+          <div class="control-panel">
+            <div class="input-group">
+              <input
+                type="text"
+                id="stock-input"
+                class="stock-input"
+                placeholder="輸入股票代碼 (如: 0050, 2330, 1101)"
+                value="0050"
+              />
+              <button id="analyze-btn" class="btn btn-primary">
+                🚀 完整分析
+              </button>
+            </div>
+            <div id="status-text" class="status-text">✅ 就緒</div>
+          </div>
+
+          <!-- 結果展示區 -->
+          <div class="results-grid">
+            <!-- 股價走勢 -->
+            <div class="result-card">
+              <h2>📈 股價走勢</h2>
+              <div id="price-display" class="content-placeholder">
+                等待分析...
+              </div>
+            </div>
+
+            <!-- 籌碼追蹤 -->
+            <div class="result-card">
+              <h2>📊 籌碼追蹤</h2>
+              <div id="chip-display" class="content-placeholder">
+                等待分析...
+              </div>
+            </div>
+
+            <!-- AI 深度分析 -->
+            <div class="result-card full-width">
+              <h2>🤖 AI 深度分析</h2>
+              <div id="analysis-display" class="content-placeholder">
+                等待分析...
+              </div>
+            </div>
+
+            <!-- 相關新聞 -->
+            <div class="result-card full-width">
+              <h2>📰 相關新聞</h2>
+              <div id="news-display" class="content-placeholder">
+                等待分析...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: 新聞監控 -->
+        <div id="monitor" class="tab-content">
+          <div class="monitor-panel">
+            <h2>🔍 自動新聞監控</h2>
+            <p class="monitor-description">
+              定期爬取財經相關新聞，智能分析市場焦點
+            </p>
+
+            <!-- 狀態指示器 -->
+            <div class="status-indicator">
+              <div id="status-light" class="status-dot idle"></div>
+              <span id="status-label">巡邏停止中</span>
+            </div>
+
+            <!-- 排程設置 -->
+            <div class="schedule-config">
+              <label for="timer-input">設定巡邏間隔 (分鐘):</label>
+              <input
+                type="number"
+                id="timer-input"
+                class="timer-input"
+                min="1"
+                max="60"
+                value="10"
+              />
+            </div>
+
+            <!-- 控制按鈕 -->
+            <div class="control-buttons">
+              <button id="start-btn" class="btn btn-primary">
+                🚀 啟動巡邏
+              </button>
+              <button id="stop-btn" class="btn btn-danger">🛑 暫停巡邏</button>
+            </div>
+
+            <!-- 排程信息 -->
+            <div id="schedule-info" class="schedule-info">目前狀態：待機中</div>
+          </div>
+
+          <!-- 監控結果區域 -->
+          <div class="monitor-results">
+            <div class="result-card full-width">
+              <h2>📋 監控日誌</h2>
+              <div id="report-output" class="content-placeholder">
+                待機中，請啟動巡邏...
+              </div>
+            </div>
+
+            <div class="result-card full-width">
+              <h2>📜 歷史紀錄</h2>
+              <div id="history-output" class="history-list">
+                <p class="placeholder">(尚無紀錄)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- 底部 -->
+      <footer class="footer">
+        <p>&copy; 2026 AI 財經監控平台 | 簡約設計版</p>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

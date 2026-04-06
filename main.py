@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from datetime import datetime
 import re
+import json
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # [1. 環境初始化]
@@ -60,24 +61,53 @@ def check_if_exists(title):
 
 def get_news_content(url):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-TW,zh;q=0.9,en;q=0.8",
     }
     try:
         if url.startswith("/"):
             url = "https://tw.news.yahoo.com" + url
-        res = requests.get(url, headers=headers, timeout=10)
+        res = requests.get(url, headers=headers, timeout=15)
+        res.encoding = "utf-8"
         soup = BeautifulSoup(res.text, "html.parser")
-        article_body = soup.find("article")
-        if article_body:
-            return "\n".join(
-                [
-                    p.get_text(strip=True)
-                    for p in article_body.find_all("p")
-                    if p.get_text(strip=True)
-                ]
-            )
-        return ""
-    except:
+
+        # 移除不必要的標籤
+        for script in soup(["script", "style", "footer", "nav", "iframe"]):
+            script.extract()
+
+        # 多種選擇器嘗試
+        article = (
+            soup.find("article")
+            or soup.find("div", class_=lambda x: x and "article" in x)
+            or soup.find("div", class_=lambda x: x and "story" in x)
+        )
+
+        if article:
+            paragraphs = article.find_all("p", recursive=True)
+        else:
+            paragraphs = soup.find_all("p", limit=50)
+
+        # 清理並組合文本
+        content_parts = []
+        for p in paragraphs:
+            text = p.get_text().strip()
+            if len(text) > 15:
+                content_parts.append(text)
+
+        content = "\n".join(content_parts)
+
+        # 清理多餘換行
+        if len(content) < 100:
+            content = soup.get_text(separator="\n").strip()
+
+        content = "\n".join(
+            line.strip() for line in content.split("\n") if line.strip()
+        )
+
+        return content[:3000]
+    except Exception as e:
+        print(f"⚠️ 爬取內容失敗: {e}")
         return ""
 
 
